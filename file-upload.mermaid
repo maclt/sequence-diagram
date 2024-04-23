@@ -17,8 +17,8 @@ participant S3
     S3 -> UI: response the result
     opt
         S3 ->> SQS: send the update event as a message to SQS(S3 Url, action type)
-        Note left of S3: Use S3 Event Notifications
-        Backend ->> SQS: request to recieve the message
+        Note left of S3: Use S3 Event Notifications. <br/>Target can be SQS, SNS, Lambda or EventBridge.<br/>FIFO is not allowed.
+        Backend ->> SQS: request to receive the message
         SQS ->> Backend: send the message (S3 Url, action type)
         Backend ->> Backend: update the persistent layer(S3 Url, action type)
     end
