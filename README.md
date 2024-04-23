@@ -1,4 +1,4 @@
 # sequence-diagram
 
 ## Viewer
-[Mermaid live editor](https://mermaid.live/){:target="_blank"}
+<a href="https://mermaid.live/" target="_blank">Mermaid live editor</a>
