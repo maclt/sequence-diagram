@@ -1,0 +1,30 @@
+sequenceDiagram
+title "SQS Basic"
+
+participant Sender
+participant SQS
+participant DQL
+participant Consumer
+
+    Sender ->> SQS : message ()
+    SQS ->> Sender: response()
+    SQS ->> SQS: make the message visible
+    SQS ->> SQS: add message in the queue
+    opt if wait time is defined
+        SQS ->> SQS: wait for delayed time
+    end
+    Consumer ->> SQS: request a visibile messasge
+    opt if wait time is defined
+        SQS ->> SQS: wait for newly coming messages for wait time
+    end
+    SQS ->> SQS: make the message invisible
+    SQS ->> SQS: start the visibility time clock
+    SQS ->> Consumer: send messagse()
+    Consumer ->> Consumer: handle message
+    alt The Consumer finish handling the message before the time clock ends
+        Consumer ->> SQS: request to delete the message
+    else The cosumer recieved more times than maxReceiveCount
+        SQS ->> DQL: send message to DLQ
+    else
+        SQS ->> SQS: make the message visible again
+    end

@@ -1,0 +1,24 @@
+sequenceDiagram
+title "File upload to S3 with pre-signed URL"
+
+actor User
+participant UI
+participant Backend
+participant SQS
+participant S3
+
+    UI ->> User: show upload UI
+    User ->> UI: select the image(image)
+    UI ->> Backend: request the pre-signed URL
+    Backend ->> S3: request the pre-signed URL(permission boundary, expire)
+    S3 ->> Backend: response the pre-signed URL(pre-signed URL)
+    Backend ->> UI: response the pre-signed URL(pre-signed URL)
+    UI ->> S3: upload the selected image(pre-signed URL, image)
+    S3 -> UI: response the result
+    opt
+        S3 ->> SQS: send the update event as a message to SQS(S3 Url, action type)
+        Note left of S3: Use S3 Event Notifications
+        Backend ->> SQS: request to recieve the message
+        SQS ->> Backend: send the message (S3 Url, action type)
+        Backend ->> Backend: update the persistent layer(S3 Url, action type)
+    end
