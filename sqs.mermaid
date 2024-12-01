@@ -5,26 +5,35 @@ participant Sender
 participant SQS
 participant DQL
 participant Consumer
-
-    Sender ->> SQS : message ()
-    SQS ->> Sender: response()
+    Note over Sender: SendMessage OR SendMessageBatch
+    Sender ->> SQS : send messages
+    SQS ->> Sender: response the result
     SQS ->> SQS: add message in the queue
-    opt if wait time is defined
-        SQS ->> SQS: wait for delayed time
+    opt if queue is delayed queue
+        SQS ->> SQS: wait for defined time (0-15min)
     end
+    opt if message timer is set for the message
+        SQS ->> SQS: wait for defined time (0-15min)
+    end
+    %% If both the queue-level delay and the message-level timer are used, the delays are additive. <br/> The max delay in total is 15 min.
     SQS ->> SQS: make the message visible
-    Consumer ->> SQS: request a visible message
-    opt if wait time is defined
+    Note over Consumer: ReceiveMessage
+    Consumer ->> SQS: request a message
+    opt if queue doesn't have messages AND wait time is defined
+        %%  SQS: wait time setting is for long polling
         SQS ->> SQS: wait for newly coming messages for wait time
     end
     SQS ->> SQS: make the message invisible
     SQS ->> SQS: start the visibility time clock
-    SQS ->> Consumer: send message()
-    Consumer ->> Consumer: handle message
-    alt The Consumer finish handling the message before the time clock ends
-        Consumer ->> SQS: request to delete the message
-    else The consumer received more times than maxReceiveCount
+    SQS ->> Consumer: return messages
+    Consumer ->> Consumer: handle the messages
+    alt if the Consumer finish handling the messages BEFORE the time clock ends
+        Note over Consumer: DeleteMessage OR DeleteMessageBatch
+        Consumer ->> SQS: request to delete the messages
+        SQS ->> SQS: delete the messages<br/>(only delete the visible messages)
+        SQS ->> Consumer: return the result
+    else if the time clock ends
+        SQS ->> SQS: make messages again visible
+    else if consumer request the message more than ${maxReceiveCount} times AND the time clock ends
         SQS ->> DQL: send message to DLQ
-    else
-        SQS ->> SQS: make the message visible again
     end
