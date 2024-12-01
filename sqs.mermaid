@@ -6,7 +6,7 @@ participant SQS
 participant DQL
 participant Consumer
     Note over Sender: SendMessage OR SendMessageBatch
-    Sender ->> SQS : send messages
+    Sender ->> SQS : send messages (Message)
     SQS ->> Sender: response the result
     SQS ->> SQS: add message in the queue
     opt if queue is delayed queue
@@ -25,15 +25,15 @@ participant Consumer
     end
     SQS ->> SQS: make the message invisible
     SQS ->> SQS: start the visibility time clock
-    SQS ->> Consumer: return messages
+    SQS ->> Consumer: return messages (Message, ReceiptHandle)
     Consumer ->> Consumer: handle the messages
     alt if the Consumer finish handling the messages BEFORE the time clock ends
         Note over Consumer: DeleteMessage OR DeleteMessageBatch
-        Consumer ->> SQS: request to delete the messages
-        SQS ->> SQS: delete the messages<br/>(only delete the visible messages)
+        Consumer ->> SQS: request to delete the messages (ReceiptHandle)
+        SQS ->> SQS: delete the messages
         SQS ->> Consumer: return the result
     else if the time clock ends
         SQS ->> SQS: make messages again visible
     else if consumer request the message more than ${maxReceiveCount} times AND the time clock ends
-        SQS ->> DQL: send message to DLQ
+        SQS ->> DQL: send message to DLQ (Message)
     end
