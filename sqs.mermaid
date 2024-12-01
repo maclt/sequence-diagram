@@ -8,11 +8,11 @@ participant Consumer
 
     Sender ->> SQS : message ()
     SQS ->> Sender: response()
-    SQS ->> SQS: make the message visible
     SQS ->> SQS: add message in the queue
     opt if wait time is defined
         SQS ->> SQS: wait for delayed time
     end
+    SQS ->> SQS: make the message visible
     Consumer ->> SQS: request a visible message
     opt if wait time is defined
         SQS ->> SQS: wait for newly coming messages for wait time
